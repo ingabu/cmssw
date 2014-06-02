@@ -315,9 +315,6 @@ void Stage1Layer2Producer::beginRun(Run const&iR, EventSetup const&iE){
   m_params->setHfRingScale(*HfRingScale);
 
 
-  //m_params->setEgLsb(emScale->linearLsb());
-  //m_params->setJetLsb(jetScale->linearLsb());
-
   //unsigned long long id = iE.get<CaloParamsRcd>().cacheIdentifier();
 
   //if (id != m_paramsCacheId)
