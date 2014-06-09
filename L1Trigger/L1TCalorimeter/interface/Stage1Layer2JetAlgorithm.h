@@ -23,7 +23,7 @@ namespace l1t {
 			      std::vector<l1t::Jet> * jets) = 0;
     virtual ~Stage1Layer2JetAlgorithm(){};
     double jetLsb;
-    int jetSeedThreshold;
+    double jetSeedThreshold;
     std::string regionPUSType;
     std::vector<double> regionPUSParams;
     std::string jetCalibrationType;

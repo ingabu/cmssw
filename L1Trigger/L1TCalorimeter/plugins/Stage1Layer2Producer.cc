@@ -93,13 +93,6 @@ namespace l1t {
     // to be extended with other "consumes" stuff
     EDGetToken regionToken;
     EDGetToken candsToken;
-
-    unsigned regionETCutForHT;
-    unsigned regionETCutForMET;
-    int minGctEtaForSums;
-    int maxGctEtaForSums;
-    double egRelativeJetIsolationCut;
-    double tauRelativeJetIsolationCut;
   };
 
   //
@@ -117,14 +110,6 @@ namespace l1t {
     regionToken = consumes<BXVector<l1t::CaloRegion>>(iConfig.getParameter<InputTag>("CaloRegions"));
     candsToken = consumes<BXVector<l1t::CaloEmCand>>(iConfig.getParameter<InputTag>("CaloEmCands"));
     int ifwv=iConfig.getParameter<unsigned>("FirmwareVersion");  // LenA  make configurable for now
-
-
-    regionETCutForHT = iConfig.getParameter<unsigned int>("regionETCutForHT");
-    regionETCutForMET = iConfig.getParameter<unsigned int>("regionETCutForMET");
-    minGctEtaForSums = iConfig.getParameter<int>("minGctEtaForSums");
-    maxGctEtaForSums = iConfig.getParameter<int>("maxGctEtaForSums");
-    egRelativeJetIsolationCut = iConfig.getParameter<double>("egRelativeJetIsolationCut");
-    tauRelativeJetIsolationCut = iConfig.getParameter<double>("tauRelativeJetIsolationCut");
 
 
     //m_fwv = boost::shared_ptr<FirmwareVersion>(new FirmwareVersion()); //not const during testing
@@ -285,14 +270,6 @@ void Stage1Layer2Producer::beginRun(Run const&iR, EventSetup const&iE){
     }
 
   }
-
-
-  m_params->setRegionETCutForHT(regionETCutForHT);
-  m_params->setRegionETCutForMET(regionETCutForMET);
-  m_params->setMinGctEtaForSums(minGctEtaForSums);
-  m_params->setMaxGctEtaForSums(maxGctEtaForSums);
-  m_params->setEgRelativeJetIsolationCut(egRelativeJetIsolationCut);
-  m_params->setTauRelativeJetIsolationCut(tauRelativeJetIsolationCut);
 
   LogDebug("l1t|stage 1 jets") << "Stage1Layer2Producer::beginRun function called...\n";
 

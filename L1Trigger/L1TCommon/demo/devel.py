@@ -61,13 +61,7 @@ process.Layer2HW = cms.EDProducer(
     "l1t::Stage1Layer2Producer",
     CaloRegions = cms.InputTag("rctLayer2Format"),
     CaloEmCands = cms.InputTag("rctLayer2Format"),
-    FirmwareVersion = cms.uint32(1),  ## 1=HI algo, 2= pp algo
-    regionETCutForHT = cms.uint32(7),
-    regionETCutForMET = cms.uint32(0),
-    minGctEtaForSums = cms.int32(4),
-    maxGctEtaForSums = cms.int32(17),
-    egRelativeJetIsolationCut = cms.double(1.), ## eg isolation cut
-    tauRelativeJetIsolationCut = cms.double(1.) ## tau isolation cut
+    FirmwareVersion = cms.uint32(1)  ## 1=HI algo, 2= pp algo
     )
 
 process.Layer2Phys = cms.EDProducer("l1t::PhysicalEtAdder",

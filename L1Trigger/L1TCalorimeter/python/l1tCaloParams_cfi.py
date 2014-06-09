@@ -31,6 +31,7 @@ l1tCaloParams = cms.ESProducer(
     egNeighbourThreshold = cms.double(1.),
     egMaxHcalEt          = cms.double(0.),
     egEtToRemoveHECut    = cms.double(128.),
+    egRelativeJetIsolationCut = cms.double(0.5),
     egMaxHOverE          = cms.double(0.15),
     egIsoPUSType         = cms.string("None"),
     egIsoLUTFile         = cms.FileInPath("L1Trigger/L1TCalorimeter/data/egIsoLUT.txt"),
@@ -45,6 +46,7 @@ l1tCaloParams = cms.ESProducer(
     tauLsb                = cms.double(0.5),
     tauSeedThreshold      = cms.double(0.),
     tauNeighbourThreshold = cms.double(0.),
+    tauRelativeJetIsolationCut = cms.double(1.),
     tauIsoPUSType         = cms.string("None"),
     tauIsoLUTFile         = cms.FileInPath("L1Trigger/L1TCalorimeter/data/tauIsoLUT.txt"),
 

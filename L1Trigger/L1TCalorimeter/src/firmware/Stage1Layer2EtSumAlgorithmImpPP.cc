@@ -13,11 +13,17 @@
 #include "DataFormats/L1CaloTrigger/interface/L1CaloRegionDetId.h"
 
 l1t::Stage1Layer2EtSumAlgorithmImpPP::Stage1Layer2EtSumAlgorithmImpPP(CaloParamsStage1* params) : params_(params)
-{
-  regionETCutForHT=params->regionETCutForHT();
-  regionETCutForMET=params->regionETCutForMET();
-  minGctEtaForSums=params->minGctEtaForSums();
-  maxGctEtaForSums=params->maxGctEtaForSums();
+{ 
+  etSumEtaMinEt = params_->etSumEtaMin(0);
+  etSumEtaMaxEt = params_->etSumEtaMax(0);
+  etSumEtThresholdEt = params_->etSumEtThreshold(0);
+
+  etSumEtaMinHt = params_->etSumEtaMin(1);
+  etSumEtaMaxHt = params_->etSumEtaMax(1);
+  etSumEtThresholdHt = params_->etSumEtThreshold(1);
+
+  //std::cout<< "ETCut, HTCut " << etSumEtThresholdEt << " " << etSumEtThresholdHt << std::endl;
+
 
   egLsb=params_->egLsb();
   jetLsb=params_->jetLsb();
@@ -65,25 +71,33 @@ void l1t::Stage1Layer2EtSumAlgorithmImpPP::processEvent(const std::vector<l1t::C
   RegionCorrection(regions, EMCands, subRegions, regionPUSParams, regionPUSType);
 
   for(std::vector<CaloRegion>::const_iterator region = subRegions->begin(); region != subRegions->end(); region++) {
-    if (region->hwEta() < minGctEtaForSums || region->hwEta() > maxGctEtaForSums) {
+    if (region->hwEta() < etSumEtaMinEt || region->hwEta() > etSumEtaMaxEt) {
       continue;
     }
 
     double regionET= regionPhysicalEt(*region);
 
-    // if (region->hwPt()>0)
-    //   std::cout << "ETA/PHI:" << region->hwEta() <<"/" << region->hwPhi() << "\tPhysical Region ET: " << regionET << "\tHardware Region ET: " << region->hwPt() << std::endl;
-    if(regionET >= regionETCutForMET){
+    if(regionET >= etSumEtThresholdEt){
       sumET += (int) regionET;
       sumEx += (int) (((double) regionET) * cosPhi[region->hwPhi()]);
       sumEy += (int) (((double) regionET) * sinPhi[region->hwPhi()]);
     }
-    if(regionET >= regionETCutForHT) {
+  }
+
+  for(std::vector<CaloRegion>::const_iterator region = subRegions->begin(); region != subRegions->end(); region++) {
+    if (region->hwEta() < etSumEtaMinHt || region->hwEta() > etSumEtaMaxHt) {
+      continue;
+    }
+
+    double regionET= regionPhysicalEt(*region);
+
+    if(regionET >= etSumEtThresholdHt) {
       sumHT += (int) regionET;
       sumHx += (int) (((double) regionET) * cosPhi[region->hwPhi()]);
       sumHy += (int) (((double) regionET) * sinPhi[region->hwPhi()]);
     }
   }
+
   double MET = ((unsigned int) sqrt(sumEx * sumEx + sumEy * sumEy));
   double MHT = ((unsigned int) sqrt(sumHx * sumHx + sumHy * sumHy));
 

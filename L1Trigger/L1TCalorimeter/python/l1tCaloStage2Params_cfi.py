@@ -32,6 +32,7 @@ l1tCaloStage2Params = cms.ESProducer(
     egHcalThreshold            = cms.double(1.),
     egMaxHcalEt                = cms.double(0.),
     egEtToRemoveHECut          = cms.double(128.),
+    egRelativeJetIsolationCut = cms.double(0.5),
     egMaxHOverELUTFile         = cms.FileInPath("L1Trigger/L1TCalorimeter/data/egMaxHOverELUT.txt"),
     egShapeIdLUTFile           = cms.FileInPath("L1Trigger/L1TCalorimeter/data/egShapeIdLUT.txt"),
     egIsoPUSType               = cms.string("None"),
@@ -48,6 +49,7 @@ l1tCaloStage2Params = cms.ESProducer(
     tauLsb                = cms.double(0.5),
     tauSeedThreshold      = cms.double(0.),
     tauNeighbourThreshold = cms.double(0.),
+    tauRelativeJetIsolationCut = cms.double(1.),
     tauIsoPUSType         = cms.string("None"),
     tauIsoLUTFile         = cms.FileInPath("L1Trigger/L1TCalorimeter/data/tauIsoLUT.txt"),
 

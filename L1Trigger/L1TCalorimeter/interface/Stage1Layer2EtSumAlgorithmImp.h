@@ -32,12 +32,14 @@ namespace l1t {
     virtual void processEvent(const std::vector<l1t::CaloRegion> & regions,
 			      const std::vector<l1t::CaloEmCand> & EMCands,
 			      std::vector<l1t::EtSum> * sums);
-
-    // input parameters
-    int regionETCutForHT;
-    int regionETCutForMET;
-    int minGctEtaForSums;
-    int maxGctEtaForSums;
+ 
+    int etSumEtaMinHt;
+    int etSumEtaMaxHt;
+    double etSumEtThresholdHt;
+  
+    int etSumEtaMinEt;
+    int etSumEtaMaxEt;
+    double etSumEtThresholdEt;
 
     double egLsb,jetLsb;
   private:

@@ -60,10 +60,6 @@ process.simRctDigis.hcalDigis = cms.VInputTag(cms.InputTag('hcalDigis'))
 process.simCaloStage1Digis.FirmwareVersion = cms.uint32(1) # 1=HI algos, 2=PP algos
 #process.simCaloStage1Digis.egRelativeJetIsolationCut = cms.double(0.5)
 #process.simCaloStage1Digis.tauRelativeJetIsolationCut = cms.double(1.)
-#process.simCaloStage1Digis.regionETCutForHT = cms.uint32(7)
-#process.simCaloStage1Digis.regionETCutForMET = cms.uint32(0)
-#process.simCaloStage1Digis.minGctEtaForSums = cms.int32(4)
-#process.simCaloStage1Digis.maxGctEtaForSums = cms.int32(17)
 
 #process.l1tCaloParams.egLsb = cms.double(1.0),
 #process.l1tCaloParams.egSeedThreshold = cms.double(1.),
