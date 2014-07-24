@@ -14,7 +14,7 @@ class Sample:
 
         self.systematic=systematic
         
-        #what's wrong
+        #what's wrong test
         
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
