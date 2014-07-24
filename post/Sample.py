@@ -14,6 +14,8 @@ class Sample:
 
         self.systematic=systematic
         
+        #what's wrong
+        
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def setType(self,sampleType):
