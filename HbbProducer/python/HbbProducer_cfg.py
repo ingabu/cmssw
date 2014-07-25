@@ -97,8 +97,6 @@ process.ak15PFJetsCHSPruned = process.ak8PFJetsCHSPruned.clone(rParam = 1.5)
 process.ak15PFJetsCHSTrimmed = process.ak8PFJetsCHSTrimmed.clone(rParam = 1.5)
 process.ak15PFJetsCHSFiltered = process.ak8PFJetsCHSFiltered.clone(rParam = 1.5)
 
-process.cmsTopTagPFJetsCHS.src = 'chs'
-
 from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection
 from PhysicsTools.PatAlgos.tools.jetTools import switchJetCollection
 
@@ -234,21 +232,6 @@ process.RandomNumberGeneratorService=process.RandomNumberGeneratorService.clone(
 process.QJetsAdderAK10=process.QJetsAdderAK8.clone(src="ak10PFJetsCHS", jetRad=1.0)
 process.QJetsAdderAK12=process.QJetsAdderAK8.clone(src="ak12PFJetsCHS", jetRad=1.2)
 process.QJetsAdderAK15=process.QJetsAdderAK8.clone(src="ak15PFJetsCHS", jetRad=1.5)
-
-process.load('RecoJets.JetProducers.ak4PFJetsPruned_cfi')
-ak10PFJetsCHSPruned=process.ak4PFJetsPruned.clone(rParam=1.0)
-ak12PFJetsCHSPruned=process.ak4PFJetsPruned.clone(rParam=1.2)
-ak15PFJetsCHSPruned=process.ak4PFJetsPruned.clone(rParam=1.5)
-
-process.load('RecoJets.JetProducers.ak4PFJetsTrimmed_cfi')
-ak10PFJetsCHSTrimmed=process.ak4PFJetsTrimmed.clone(rParam=1.0)
-ak12PFJetsCHSTrimmed=process.ak4PFJetsTrimmed.clone(rParam=1.2)
-ak15PFJetsCHSTrimmed=process.ak4PFJetsTrimmed.clone(rParam=1.5)
-
-process.load('RecoJets.JetProducers.ak4PFJetsFiltered_cfi')
-ak10PFJetsCHSFiltered=process.ak4PFJetsFiltered.clone(rParam=1.0)
-ak12PFJetsCHSFiltered=process.ak4PFJetsFiltered.clone(rParam=1.2)
-ak15PFJetsCHSFiltered=process.ak4PFJetsFiltered.clone(rParam=1.5)
 
 process.AK8PFJetsCHSPrunedLinks=process.ak8PFJetsCHSPrunedLinks.clone()
 process.AK10PFJetsCHSPrunedLinks=process.AK8PFJetsCHSPrunedLinks.clone(src="ak10PFJetsCHS", matched="ak10PFJetsCHSPruned", distMax=1.0)

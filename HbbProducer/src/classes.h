@@ -44,10 +44,10 @@ namespace {
     std::vector<Hbb::V> dummy26;
     edm::Wrapper<std::vector<Hbb::V> > dummy27;
 
-    Hbb::H dummy28;
-    edm::Wrapper<Hbb::H> dummy29;
-    std::vector<Hbb::H> dummy30;
-    edm::Wrapper<std::vector<Hbb::H> > dummy31;
+    Hbb::Higgs dummy28;
+    edm::Wrapper<Hbb::Higgs> dummy29;
+    std::vector<Hbb::Higgs> dummy30;
+    edm::Wrapper<std::vector<Hbb::Higgs> > dummy31;
 
     Hbb::MET dummy32;
     edm::Wrapper<Hbb::MET> dummy33;

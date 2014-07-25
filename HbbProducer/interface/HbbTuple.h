@@ -8,17 +8,26 @@
 namespace Hbb
 {
 
-  int def=-9999;
-
   //---------------------------------------------------------------------------------
 
   struct Object
   {
     TLorentzVector lv;
+    //Object *daughter1, *daughter2;
 
   Object() :
     lv(TLorentzVector())
     {
+    }
+
+  Object(TLorentzVector theLV) : lv(TLorentzVector())
+    {
+      lv.SetPtEtaPhiM(theLV.Pt(), theLV.Eta(), theLV.Phi(), theLV.M());
+    }
+
+  Object(double pT, double eta, double phi, double m) : lv(TLorentzVector())
+    {
+      lv.SetPtEtaPhiM(pT, eta, phi, m);
     }
 
   };
@@ -32,9 +41,9 @@ namespace Hbb
     float qJetsVolatility;
   
   Jet() : Object(),
-      tau1(def), tau2(def), tau3(def),
-      prunedMass(def), trimmedMass(def), filteredMass(def),
-      qJetsVolatility(def)
+      tau1(-9999), tau2(-9999), tau3(-9999),
+      prunedMass(-9999), trimmedMass(-9999), filteredMass(-9999),
+      qJetsVolatility(-9999)
     {
     }
 
@@ -47,7 +56,7 @@ namespace Hbb
     int charge;
     
   Lepton() : Object(),
-      charge(def)
+      charge(-9999)
       {
       }
 
@@ -91,7 +100,7 @@ namespace Hbb
 
   //---------------------------------------------------------------------------------
 
-  struct H:Object
+  struct Higgs:Object
   {
   };
 
@@ -116,11 +125,14 @@ namespace Hbb
     std::vector<Electron> Electrons;
     std::vector<Muon> Muons;
     std::vector<Tau> Taus;
+
+    std::vector<Higgs> Higgses;
     
   Tuple() : 
-    rho(def), 
+    rho(-9999), 
       AK4PFCHS(std::vector<Jet>()), AK8PFCHS(std::vector<Jet>()), AK10PFCHS(std::vector<Jet>()), AK12PFCHS(std::vector<Jet>()), AK15PFCHS(std::vector<Jet>()),
-      Electrons(std::vector<Electron>()), Muons(std::vector<Muon>()),Taus(std::vector<Tau>())
+      Electrons(std::vector<Electron>()), Muons(std::vector<Muon>()),Taus(std::vector<Tau>()),
+      Higgses(std::vector<Higgs>())
     {
     }
   };
@@ -131,6 +143,7 @@ namespace Hbb
   typedef std::vector<Muon> MuonCollection;
   typedef std::vector<Tau> TauCollection;
   typedef std::vector<Tuple> TupleCollection;
+  typedef std::vector<Higgs> HiggsCollection;
 }
 
 #endif

@@ -28,9 +28,11 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "VHbb/HbbProducer/interface/HbbTuple.h"
+#include "VHbb/HbbProducer/src/telescope.cc"
 
-#include <DataFormats/PatCandidates/interface/Jet.h>
-#include <DataFormats/PatCandidates/interface/Muon.h>
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 
 #include <vector>
 #include <memory>
@@ -62,6 +64,7 @@ private:
   //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
   
   edm::InputTag _rhoSource;
+  edm::InputTag _packedCandidateSource;
   edm::InputTag _AK4Source, _AK8Source, _AK10Source, _AK12Source, _AK15Source;
   edm::InputTag _muonSource;
   
@@ -87,6 +90,9 @@ HbbProducer::HbbProducer(const edm::ParameterSet& iConfig)
 {
   
   _rhoSource=edm::InputTag(iConfig.getParameter<edm::InputTag>("rhoSource"));
+
+  _packedCandidateSource=edm::InputTag(iConfig.getParameter<edm::InputTag>("packedCandidateSource"));
+
   _AK4Source=edm::InputTag(iConfig.getParameter<edm::InputTag>("AK4Source"));
   _AK8Source=edm::InputTag(iConfig.getParameter<edm::InputTag>("AK8Source"));
   _AK10Source=edm::InputTag(iConfig.getParameter<edm::InputTag>("AK10Source"));
@@ -119,6 +125,9 @@ HbbProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   edm::Handle<double> rho;
   iEvent.getByLabel(_rhoSource,rho);
+
+  edm::Handle< edm::PtrVector<reco::Candidate> > packedCandidates;
+  iEvent.getByLabel(_packedCandidateSource, packedCandidates);
 
   map< string, h_patJets > fatJetInputs=map< string, h_patJets >();
   map< string, v_HbbJets* > fatJetOutputs=map< string, v_HbbJets* >();
@@ -155,7 +164,26 @@ HbbProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   _output.rho=*rho;
 
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  //Jets
+  //AK4 Jets
+
+  pat::Jet d1, d2;
+  double maxPT2=0;
+  for(auto jet1=AK4jets->begin(); jet1!=AK4jets->end(); ++jet1){
+    for(auto jet2=jet1; jet2!=AK4jets->end(); ++jet2){
+      if (jet2->pt()>=jet1->pt()) continue;
+      
+      double pT2=pow(jet1->px()+jet2->px(),2)+pow(jet1->py()+jet2->py(),2);
+      if (pT2>maxPT2){
+	d1=*jet1;
+	d2=*jet2;
+      }
+    }
+  }
+
+  vector<Hbb::Higgs> theHiggses=telescope(d1, d2, packedCandidates);
+
+  //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  //fat jets
 
   for(auto fatJetCollection=fatJetInputs.begin(); fatJetCollection!=fatJetInputs.end(); ++fatJetCollection){
     string name=fatJetCollection->first;
@@ -180,7 +208,7 @@ HbbProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
     *fatJetOutputs[name]=outputJets;
   }
-  
+
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //Muons
 
