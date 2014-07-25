@@ -28,7 +28,7 @@ gROOT.ProcessLine('.x compileStep4.C')
 cTime=datetime.datetime.now()
 date='%i_%i_%i'%(cTime.year,cTime.month,cTime.day)
 
-condorDir='/uscmst1b_scratch/lpc1/3DayLifetime/'+getpass.getuser()'+/condorLogs/%s/%s'%(date,inputDir.split('/')[-1])
+condorDir='/uscmst1b_scratch/lpc1/3DayLifetime/'+getpass.getuser()+'/condorLogs/%s/%s'%(date,inputDir.split('/')[-1])
 outputDir+='/%s/%s'%(date,inputDir.split('/')[-1])
 
 shutil.copytree(inputDir,outputDir,ignore=files)

@@ -33,11 +33,13 @@ class Plot:
         self.is1D=not self.is2D
 
         if self.binsX:
+            print "binsX =",binsX
             self.nBinsX=len(self.binsX)-1
             self.xMin=self.binsX[0]
             self.xMax=self.binsX[-1]
 
             if self.is2D:
+                print "binsY =",binsY
                 self.nBinsY=len(self.binsY)-1
                 self.yMin=self.binsY[0]
                 self.yMax=self.binsY[-1]
@@ -53,8 +55,8 @@ class Plot:
 
         self.binsX=array('f',self.binsX)
         if self.is2D: self.binsY=array('f',self.binsY)
-                        
-        self.extraHists={}
+
+        self.extraHists={}   #For Combine
 
         #make name unique
         self.name+='_'+self.cuts+'_Vtype'+str(self.Vtype)+'_'+self.boost+'Boost'
@@ -131,7 +133,7 @@ class Plot:
                 weight+=' * '+self.trigWeight
                 if isEqual(sample.type,'WJets'): weight+=' * weightWpt_WJets'
                 if isEqual(sample.type,'ttbar'): weight+=' * weightWpt_TTbar'
-                weight+=' * weightEleTrigger'
+                weight+=' * weightEleTrigger'  #Why are we applying this weight to muon channel? JS
 
                 if doBDT:
                     weight+=' * 2'
@@ -166,22 +168,20 @@ class Plot:
                 sample.chain.Draw(self.distribution+'>>'+self.extraHists[W_b].GetName(),weight+' * '+str(scaleFactors[self.boost]['W_b'])    +' * ('+theCuts+' && ((abs(hJet_flavour[0])==5)+(abs(hJet_flavour[1])==5))==1)','GOFF')
                 sample.chain.Draw(self.distribution+'>>'+self.extraHists[W_bb].GetName(),weight+' * '+str(scaleFactors[self.boost]['W_bb'])   +' * ('+theCuts+' && ((abs(hJet_flavour[0])==5)+(abs(hJet_flavour[1])==5))==2)','GOFF')
 
-                if showOverflow:
+                if showOverflow:   #if we fix the overflow when drawing all histograms, then all the "extraHists" will automatically have overflow taken care of
                     for hName in [W_light,W_b,W_bb]:
                         h=self.extraHists[hName]
                         self.overflow(h)
-
+                
                 sample.h.Add(self.extraHists[W_light])
                 sample.h.Add(self.extraHists[W_b])
                 sample.h.Add(self.extraHists[W_bb])
-                
+
+                #Inclusive W sample will be scaled below
                 self.extraHists[W_light].Scale(self.lumi)
                 self.extraHists[W_b].Scale(self.lumi)
                 self.extraHists[W_bb].Scale(self.lumi)
 
-                for key in [W_light,W_b,W_bb]:
-                    yields[key]=self.integral(self.extraHists[key])
-                                                                
             else:
                 if isEqual(sample.type,'ttbar') and applyNormSFs: scaleFactor=str(scaleFactors[self.boost]['ttbar'])
                 else: scaleFactor='1'
@@ -193,92 +193,133 @@ class Plot:
                     print theCuts
                     print '=============================='
 
-                val = sample.chain.Draw(self.distribution+">>"+sample.h.GetName(),weight+' * '+scaleFactor+' * ('+theCuts+')','GOFF')
+                if not blind or not contains(sample.type,'data'):
+                    val = sample.chain.Draw(self.distribution+">>"+sample.h.GetName(),weight+' * '+scaleFactor+' * ('+theCuts+')','GOFF')
                 
                 stdout_old = sys.stdout
                 logFile = open(outputDir + '/log.txt','a')
                 sys.stdout = logFile
-                if DEBUG: print sample.name, self.Vtype, self.cuts, self.boost, sample.h.Integral()
+                if DEBUG:
+                    print "Draw:",sample.name, self.Vtype, self.cuts, self.boost, sample.h.Integral(), sample.h.Integral(0,sample.h.GetNbinsX()+1, 0,sample.h.GetNbinsY()+1)
                 sys.stdout = stdout_old
                 logFile.close()
-                if DEBUG: print sample.h.Integral()
 
-            if showOverflow: self.overflow(sample.h)
-
+            #output.cd()
             if sample.isMC: sample.h.Scale(self.lumi)
-            yields[sample.name]=self.integral(sample.h) #for cutflow table
+            if showOverflow: self.overflow(sample.h)
+            if fillEmptyBins and sample.isBackground: fillBins(sample.h)
 
-            if makeDataCard and fillEmptyBins:
-                if sample.isBackground: fillBins(sample.h)
-
-        #Make histograms for background combinations and fill yield table
-        for sample in samples:
-            if self.skip(sample) or isEqual(sample.type,'signal'): continue
-
+            #Make histograms for background combinations and fill yield table
             name=sample.type
             if sample.systematic: name+='_'+sample.systematic
-            if not name in self.extraHists.keys():
-                self.extraHists[name]=self.newHist(name)
-                yields[name]=0
+            if not name in self.extraHists.keys(): self.extraHists[name]=self.newHist(name)
             self.extraHists[name].Add(sample.h)
-            yields[name]+=self.integral(sample.h)
 
-        output.cd()
-        self.signals=[]
-        self.backgroundStack=THStack()
+        #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        #Systematics
         
+        #Statistical
+        if doStatSys or doAllSys:
+            for sample in samples:
+                try: histName=sample.h.GetName()
+                except: continue
+                if contains(histName,'data') or contains(histName,'total back') or contains(histName,'up') or contains(histName,'down') or contains(histName,'shape'): continue   #Only calculate for nominal backgrounds - this is dangerous, 'up' could accidentally match a lot of things
+                if sample.isSignal: ID=sample.name.split('_')[-1]
+                else: ID=sample.name
+                self.makeStat(sample.h,ID)
+
+            for histName in self.extraHists.keys():
+                
+                if contains(histName,'data') or contains(histName,'total back') or contains(histName,'up') or contains(histName,'down') or contains(histName,'shape'): continue   #Only calculate for nominal backgrounds - this is dangerous, 'up' could accidentally match a lot of things
+                ID=histName
+                self.makeStat(self.extraHists[histName],ID)
+
+        #W+Jets and ttbar shape
+        if doWJetsShapeSys or doTTbarShapeSys or doAllSys:
+            shapeSamples=[]
+            if doWJetsShapeSys or doAllSys and self.extraHists.has_key('WJets'):
+                shapeSamples+=['W_light','W_b','W_bb']
+            if doTTbarShapeSys or doAllSys and self.extraHists.has_key('ttbar'):
+                shapeSamples+=['ttbar']
+                    
+            for sampleName in shapeSamples:
+                nominal=self.extraHists[sampleName]
+                if sampleName=='ttbar': up=self.extraHists[sampleName+'_ttbarShapeUp']
+                else: up=self.extraHists[sampleName+'_WJetsShapeUp']
+                down=up.Clone(up.GetName().replace('Up','Down'))
+
+                if self.is1D:
+                    for xBin in range(0,self.nBinsX+2):
+                        down.SetBinContent(xBin,max(0,nominal.GetBinContent(xBin)-(up.GetBinContent(xBin)-nominal.GetBinContent(xBin))))
+                else:
+                    for xBin in range(0,self.nBinsX+2):
+                        for yBin in range(0,self.nBinsY+2):
+                            down.SetBinContent(yBin,max(0,nominal.GetBinContent(xBin,yBin)-(up.GetBinContent(xBin,yBin)-nominal.GetBinContent(xBin,yBin))))
+                if sampleName=='ttbar': self.extraHists[sampleName+'_ttbarShapeDown']=down
+                else: self.extraHists[sampleName+'_WJetsShapeDown']=down
+                            
+        #Force W+Jets and ttbar systematic integrals to nominal values
+        for histName in self.extraHists.keys():
+            if self.extraHists.has_key('WJets'):  #Sometimes I skip WJets for speed - JS
+                if contains(histName,'W_light_'):
+                    self.extraHists[histName].Scale(self.integral(self.extraHists['W_light'])/self.integral(self.extraHists[histName]))
+                elif contains(histName,'W_b_'):
+                    self.extraHists[histName].Scale(self.integral(self.extraHists['W_b'])/self.integral(self.extraHists[histName]))
+                elif contains(histName,'W_bb_'):
+                    self.extraHists[histName].Scale(self.integral(self.extraHists['W_bb'])/self.integral(self.extraHists[histName]))
+            if self.extraHists.has_key('ttbar'):
+                if contains(histName,'ttbar_'):
+                    self.extraHists[histName].Scale(self.integral(self.extraHists['ttbar'])/self.integral(self.extraHists[histName]))
+                                                                                                       
+        #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        #Signals and total background - yes it shouldn't really be here but I want to return the total background yield - JS
+
+        self.signals=[]
         for sample in samples:
             if self.skip(sample): continue
             
+            sample.h.SetLineWidth(4)
             if sample.isSignal:
-                sample.h.Scale(signalMagFrac)
                 sample.h.SetLineColor(1)
                 sample.h.SetLineStyle(2+len(self.signals))
                 self.signals.append(sample)
-            elif sample.isBackground:
-                pass
-            elif sample.isData:
-                pass
-            sample.h.SetLineWidth(4)
-
-            
-        backgroundCombos=[['QCD',ROOT.kMagenta,ROOT.kMagenta+1],['ZJets',ROOT.kYellow-7,ROOT.kYellow-4],['WJets',ROOT.kGreen-3,ROOT.kGreen-2],['singleTop',ROOT.kCyan-7,ROOT.kCyan-3],['ttbar',ROOT.kBlue-7,ROOT.kBlue-3],['VV',ROOT.kGray+2,ROOT.kGray+3],['VZ',ROOT.kRed-7,ROOT.kRed-4]]
-        for b in backgroundCombos:
-            bName=b[0]
-            fill=b[1]
-            line=b[2]
+                
+        self.backgroundStack=THStack()
+        for background in plotBackgrounds:
             try:
-                self.extraHists[bName].SetFillColor(fill)
-                self.extraHists[bName].SetLineColor(line)
-                self.backgroundStack.Add(self.extraHists[bName])
-            except: pass
-
+                self.extraHists[background].SetFillColor(backgroundFillColors[background])
+                self.extraHists[background].SetLineColor(backgroundLineColors[background])
+                self.backgroundStack.Add(self.extraHists[background])
+            except: print "No",background,"background found!"
         self.extraHists['Total Background']=self.backgroundStack.GetStack().Last().Clone(self.name+'__totalBackground'); self.extraHists['Total Background'].Sumw2()
         
-        for key in self.extraHists.keys():
-            yields[key]=self.integral(self.extraHists[key])
+        #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        #Yields
 
+        for sample in samples:
+            if self.skip(sample): continue
+            yields[sample.name]=self.integral(sample.h)
+        for histName in self.extraHists.keys():
+            yields[histName]=self.integral(self.extraHists[histName])
         return yields
 
     #---------------------------------------------------------------------------------------------------------------------------------------------------------
     
     def Draw(self):
-        gStyle.SetErrorX(0.5)
-
         self.canvas=TCanvas(self.name,"",1000,800)
 
-        if self.is2D: return 0
+        gStyle.SetErrorX(0.5)
 
         yDiv=0.35
         if blind == True:
             yDiv=0.1
-        
+            
         uMargin = 0
         if blind == True:
             uMargin = 0.15
-
+             
         rMargin=.08
-
+        
         self.uPad=TPad("uPad","",0,yDiv,1,1) #for actual plots
         self.uPad.SetTopMargin(0.07)
         self.uPad.SetBottomMargin(uMargin)
@@ -286,7 +327,7 @@ class Plot:
         self.uPad.SetLeftMargin(.18)
         self.uPad.Draw()
 
-        if blind == False:
+        if blind == False:                                    
             self.lPad=TPad("lPad","",0,0,1,yDiv) #for sigma runner
             self.lPad.SetTopMargin(0)
             self.lPad.SetBottomMargin(.4)
@@ -314,120 +355,102 @@ class Plot:
         self.backgroundStack.Draw("SAME HIST")
         for signal in self.signals:
             if signal in samplesForPlotting:
+                signal.h.Scale(signalMagFrac)
                 signal.h.Draw("SAME HIST")
+                signal.h.Scale(1./signalMagFrac)
 
-        if blind:
-            for binNo in range(0,self.nBinsX+2): self.extraHists['Data'].SetBinContent(binNo,0)
         self.extraHists['Data'].Draw("SAME E1 X0") #redraw data so its not hidden
         self.uPad.RedrawAxis()
 
-        #calculate stat+sys uncertainty
-        self.uncBand=self.extraHists['Total Background'].Clone("unc")
-        for binNo in range(0,self.nBinsX+2):
-            lumiUnc=0
-            statUnc=0
-            sigmaUnc=0
-            for sample in samples:
-                if sample.systematic or (not sample.isBackground) or self.skip(sample): continue
-                lumiUnc+=(sample.h.GetBinContent(binNo)*lumiFracUnc)**2
-                sigmaUnc+=(sample.h.GetBinContent(binNo)*sigmaFracUnc[sample.type])**2
-                statUnc+=sample.h.GetBinError(binNo)**2
-            totalUnc=sqrt(lumiUnc+sigmaUnc+statUnc)
-            self.uncBand.SetBinError(binNo,totalUnc)
-            self.extraHists['Total Background'].SetBinError(binNo,totalUnc)
-        self.uncBand.SetFillStyle(3344)
-        self.uncBand.SetFillColor(1)
-        self.uncBand.SetLineColor(1)
-        self.uncBand.SetMarkerSize(0)
-        gStyle.SetHatchesLineWidth(1)
-        self.uncBand.Draw("SAME E2")
-
-        legend=TLegend(0.6,0.6,0.90,0.90)
-        SetOwnership( legend, 0 )   # 0 = release (not keep), 1 = keep
-        legend.SetShadowColor(0);
-        legend.SetFillColor(0);
-        legend.SetLineColor(0);
-        legend.SetTextFont(42);
-        if blind == False:
-            legend.AddEntry(self.extraHists['Data'],"Data")
-        for bName,bLabel in zip(reversed(['QCD','ZJets','WJets','singleTop','ttbar','VV','VZ']),reversed(['QCD','Z+jets','W+jets','single top','ttbar','VV','VZ'])):
-            try: legend.AddEntry(self.extraHists[bName],bLabel,"f")
-            except: pass
-
-        for signal in self.signals:
-            if signal in samplesForPlotting:
-                legend.AddEntry(signal.h, signal.altName + " x" + str(signalMagFrac), "l")
-
-        legend.AddEntry(self.uncBand , "Uncertainty" , "f")
-        legend.Draw("SAME")
+        if self.is1D:
         
-        prelimTex=TLatex()
-        prelimTex.SetNDC()
-        prelimTex.SetTextSize(0.04)
-        prelimTex.SetTextAlign(31) # align right
-        prelimTex.SetTextFont(42)
-        lumi=self.lumi/1000.
-        lumi=round(lumi,2)
-        prelimTex.DrawLatex(0.9, 0.95, "CMS Preliminary, "+str(lumi)+" fb^{-1} at #sqrt{s} = 8 TeV");
-            
-        channelTex = TLatex()
-        channelTex.SetNDC()
-        channelTex.SetTextSize(0.08)
-        channelTex.SetTextAlign(31)
-        channelTex.SetTextFont(42)
-        if self.Vtype==0: text='Z #rightarrow #mu#mu'
-        elif self.Vtype==1: text='Z #rightarrow ee'
-        elif self.Vtype==2: text='W #rightarrow #mu#nu'
-        else: text='W #rightarrow e#nu'
-        channelTex.DrawLatex(0.5, 0.83, text);
-
-        if blind == False:
-            self.lPad.cd()
-            self.pull=self.extraHists['Data'].Clone("pull")
+            #calculate stat+sys uncertainty band
+            self.uncBand=self.extraHists['Total Background'].Clone("unc")
             for binNo in range(0,self.nBinsX+2):
-                if self.extraHists['Total Background'].GetBinError(binNo)!=0:
-                    self.pull.SetBinContent(binNo,(self.extraHists['Data'].GetBinContent(binNo)-self.extraHists['Total Background'].GetBinContent(binNo))/sqrt(self.extraHists['Total Background'].GetBinError(binNo)**2+self.extraHists['Data'].GetBinError(binNo)**2))
-            self.pull.SetMaximum(3)
-            self.pull.SetMinimum(-3)
-            self.pull.SetFillColor(2)
-            self.pull.SetLineColor(2)
-            self.formatLowerHist(self.pull)
-            self.pull.GetYaxis().SetTitle('Pull')
-            self.pull.Draw("HIST")
+                lumiUnc=0
+                statUnc=0
+                sigmaUnc=0
+                for sample in samples:
+                    if sample.systematic or (not sample.isBackground) or self.skip(sample): continue
+                    lumiUnc+=(sample.h.GetBinContent(binNo)*lumiFracUnc)**2
+                    sigmaUnc+=(sample.h.GetBinContent(binNo)*sigmaFracUnc[sample.type])**2
+                    statUnc+=sample.h.GetBinError(binNo)**2
+                totalUnc=sqrt(lumiUnc+sigmaUnc+statUnc)
+                self.uncBand.SetBinError(binNo,totalUnc)
+                self.extraHists['Total Background'].SetBinError(binNo,totalUnc)
+            self.uncBand.SetFillStyle(3344)
+            self.uncBand.SetFillColor(1)
+            self.uncBand.SetLineColor(1)
+            self.uncBand.SetMarkerSize(0)
+            gStyle.SetHatchesLineWidth(1)
+            self.uncBand.Draw("SAME E2")
 
+            legend=TLegend(0.6,0.6,0.90,0.90)
+            SetOwnership( legend, 0 )   # 0 = release (not keep), 1 = keep
+            legend.SetShadowColor(0)
+            legend.SetFillColor(0)
+            legend.SetLineColor(0)
+            legend.SetTextFont(42)
+            if blind == False:
+                legend.AddEntry(self.extraHists['Data'],"Data")
+            for bName,bLabel in zip(reversed(['QCD','ZJets','WJets','singleTop','ttbar','VV','VZ']),reversed(['QCD','Z+jets','W+jets','single top','ttbar','VV','VZ'])):
+                try: legend.AddEntry(self.extraHists[bName],bLabel,"f")
+                except: pass
 
-    #---------------------------------------------------------------------------------------------------------------------------------------------------------
+            for signal in self.signals:
+                if signal in samplesForPlotting:
+                    legend.AddEntry(signal.h, signal.altName + " x" + str(signalMagFrac), "l")
 
-    def Write(self):
+            legend.AddEntry(self.uncBand , "Uncertainty" , "f")
+            legend.Draw("SAME")
 
-        output.cd()
-        self.canvas.Write()
-        self.canvas.SaveAs(outputDir+'/'+self.name+'.pdf')
-        self.canvas.SaveAs(outputDir+'/'+self.name+'.eps')
-        self.canvas.SaveAs(outputDir+'/'+self.name+'.png')
+            prelimTex=TLatex()
+            prelimTex.SetNDC()
+            prelimTex.SetTextSize(0.04)
+            prelimTex.SetTextAlign(31) # align right
+            prelimTex.SetTextFont(42)
+            lumi=self.lumi/1000.
+            lumi=round(lumi,2)
+            prelimTex.DrawLatex(0.9, 0.95, "CMS Preliminary, "+str(lumi)+" fb^{-1} at #sqrt{s} = 8 TeV");
 
-        if makeDataCard and unrolld2D:
+            channelTex = TLatex()
+            channelTex.SetNDC()
+            channelTex.SetTextSize(0.08)
+            channelTex.SetTextAlign(31)
+            channelTex.SetTextFont(42)
+            if self.Vtype==0: text='Z #rightarrow #mu#mu'
+            elif self.Vtype==1: text='Z #rightarrow ee'
+            elif self.Vtype==2: text='W #rightarrow #mu#nu'
+            else: text='W #rightarrow e#nu'
+            channelTex.DrawLatex(0.5, 0.83, text);
+
+            if blind == False:
+                self.lPad.cd()
+                self.pull=self.extraHists['Data'].Clone("pull")
+                for binNo in range(0,self.nBinsX+2):
+                    if self.extraHists['Total Background'].GetBinError(binNo)!=0:
+                        self.pull.SetBinContent(binNo,(self.extraHists['Data'].GetBinContent(binNo)-self.extraHists['Total Background'].GetBinContent(binNo))/sqrt(self.extraHists['Total Background'].GetBinError(binNo)**2+self.extraHists['Data'].GetBinError(binNo)**2))
+                self.pull.SetMaximum(3)
+                self.pull.SetMinimum(-3)
+                self.pull.SetFillColor(2)
+                self.pull.SetLineColor(2)
+                self.formatLowerHist(self.pull)
+                self.pull.GetYaxis().SetTitle('Pull')
+                self.pull.Draw("HIST")
+
+            self.canvas.Write()
+            self.canvas.SaveAs(outputDir+'/'+self.name+'.pdf')
+            self.canvas.SaveAs(outputDir+'/'+self.name+'.eps')
+            self.canvas.SaveAs(outputDir+'/'+self.name+'.png')
+
+        if unroll2D:
             for sample in allSamples:
                 if self.skip(sample): continue
+                #print sample.name,sample.h.Integral()
                 sample.h=unroll(sample.h)
             for key,value in self.extraHists.items():
+                #print key, self.extraHists[key].Integral()
                 self.extraHists[key]=unroll(value)
-
-        for sample in samples:
-            if sample.isSignal:
-                sample.h.Scale(1./signalMagFrac)
-
-        for histName in self.extraHists.keys():
-            try:
-                if contains(histName,'W_light_'):
-                    self.extraHists[histName].Scale(self.integral(self.extraHists['W_light'])/self.integral(self.extraHists[histName]))
-                elif contains(histName,'W_b_'):
-                    self.extraHists[histName].Scale(self.integral(self.extraHists['W_b'])/self.integral(self.extraHists[histName]))
-                elif contains(histName,'W_bb_'):
-                    self.extraHists[histName].Scale(self.integral(self.extraHists['W_bb'])/self.integral(self.extraHists[histName]))
-                elif contains(histName,'ttbar_'):
-                    self.extraHists[histName].Scale(self.integral(self.extraHists['ttbar'])/self.integral(self.extraHists[histName]))
-            except: pass
 
         #Write histograms
         for sample in samples:
@@ -435,127 +458,32 @@ class Plot:
             sample.h.Write()
                         
         for histName in self.extraHists.keys():
-            try: self.extraHists[histName].Write()
-            except: pass
-
-        #Stat systematic
-        if (doStatSys or doAllSys):
-            for sample in samples:
-                if self.skip(sample): continue
-                if sample.systematic: continue   #Only calculate for nominal samples
-                if not sample.isSignal: continue   #Only calculate for signal - backgrounds will be treated below in loop over extraHists
-                name=sample.name.split('_')[-1]
-                statUp=sample.h.Clone(sample.h.GetName()+'_stat_'+name+'Up')
-                statDown=sample.h.Clone(sample.h.GetName()+'_stat_'+name+'Down')
-
-                for binNo in range(0,sample.h.GetNbinsX()+2):   #already unrolled
-                    nominal=sample.h.GetBinContent(binNo)
-                    unc=sample.h.GetBinError(binNo)
-                    statUp.SetBinContent(binNo,nominal+unc)
-                    statDown.SetBinContent(binNo,max(0,nominal-unc))
-                statUp.Write()
-                statDown.Write()
-
-            for histName in self.extraHists.keys():
-                if 'Data' in histName or 'Total Back' in histName or 'up' in histName or 'down' in histName or 'shape' in histName or 'Shape' in histName: continue   #Only calculate for nominal backgrounds
-                h=self.extraHists[histName]
-                statUp=h.Clone(h.GetName()+'_stat_'+histName+'Up')
-                statDown=h.Clone(h.GetName()+'_stat_'+histName+'Down')
-
-                for binNo in range(0,sample.h.GetNbinsX()+2):   #already unrolled
-                    nominal=h.GetBinContent(binNo)
-                    unc=h.GetBinError(binNo)
-                    statUp.SetBinContent(binNo,nominal+unc)
-                    statDown.SetBinContent(binNo,max(0,nominal-unc))
-                            
-                if ('ttbar' in histName) or 'WJets' in histName:   #this is not a bug - JS3
-                    statUp.Scale(self.integral(h)/self.integral(statUp))
-                    statDown.Scale(self.integral(h)/self.integral(statDown))
-                statUp.Write()
-                statDown.Write()
-
-            #Shape sys
-            if doWJetsShapeSys or doAllSys:
-                if self.extraHists.has_key('W_light'):   #It is often useful for testing to skip W+jets
-                    for sampleName in ['W_light','W_b','W_bb']:
-                            nominal=self.extraHists[sampleName]
-                            up=self.extraHists[sampleName+'_WJetsShapeUp']
-                            down=up.Clone(up.GetName().replace('Up','Down'))
-                            for binNo in range(0,sample.h.GetNbinsX()+2):   #already unrolled    
-                                down.SetBinContent(binNo,max(0,nominal.GetBinContent(binNo)-(up.GetBinContent(binNo)-nominal.GetBinContent(binNo))))
-                            down.Scale(self.integral(nominal)/self.integral(down))
-                            down.Write()
-                
-            if doTTbarShapeSys or doAllSys:
-                if self.extraHists.has_key('ttbar'):
-                        nominal=self.extraHists['ttbar']
-                        up=self.extraHists['ttbar_ttbarShapeUp']
-                        down=up.Clone(up.GetName().replace('Up','Down'))
-                        for binNo in range(0,sample.h.GetNbinsX()+2):   #already unrolled    
-                            down.SetBinContent(binNo,max(0,nominal.GetBinContent(binNo)-(up.GetBinContent(binNo)-nominal.GetBinContent(binNo))))
-                        down.Scale(self.integral(nominal)/self.integral(down))
-                        down.Write()
-
-        #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        if doShapeComparison:
-            if self.extraHists['ewk'].Integral(0,self.nBinsX+1)>0: self.extraHists['ewk'].Scale(1./self.extraHists['ewk'].Integral(0,self.nBinsX+1))
-            self.extraHists['ewk'].SetFillColor(kWhite)
-            if self.extraHists['top'].Integral(0,self.nBinsX+1)>0: self.extraHists['top'].Scale(1./self.extraHists['top'].Integral(0,self.nBinsX+1))
-            self.extraHists['top'].SetFillColor(kWhite)
-            for signal in self.signals:
-                if signal.Integral(0,self.nBinsX+1)>0: signal.Scale(1./signal.Integral(0,self.nBinsX+1))
-                signal.SetFillColor(kWhite)
-            
-            maximum=0
-            for hist in [self.extraHists['ewk'],self.extraHists['top']]+self.signals:
-                if hist.GetMaximum()>maximum: maximum=hist.GetMaximum()
-            self.extraHists['ewk'].SetMaximum(1.1*maximum)
-                        
-            #self.formatUpperHist(self.extraHists['ewk']);
-            self.extraHists['ewk'].GetYaxis().SetTitle('Shape')
-            
-            ewkEff=self.extraHists['ewk'].Clone('ewkEff')
-            #self.formatLowerHist(ewkEff)
-            ewkEff.GetYaxis().SetTitle('1-Integral')
-            ewkEff.SetMinimum(.8)
-            ewkEff.SetMaximum(1)
-            
-            topEff=self.extraHists['top'].Clone('topEff')
-            signalEffs=[]
-            for signal in self.signals: signalEffs.append(signal.Clone('signalEff'+str(len(signalEffs)))); 
-
-            for binNo in range(1,self.nBinsX+2):
-                ewkEff.SetBinContent(binNo,1-self.extraHists['ewk'].Integral(0,binNo))
-                topEff.SetBinContent(binNo,1-self.extraHists['top'].Integral(0,binNo))
-                for signal,signalEff in zip(self.signals,signalEffs): signalEff.SetBinContent(binNo,1-signal.Integral(0,binNo))
-
-            self.canvas=TCanvas('shape_'+self.name,"",1000,800)
-            #self.uPad.cd()
-            self.extraHists['ewk'].Draw()
-            self.extraHists['top'].Draw("SAME")
-            for signal in self.signals: signal.Draw("SAME")
-
-            legend.Clear()
-            legend.AddEntry(self.extraHists['top'],"t#bar{t} + Single-Top", "l")
-            legend.AddEntry(self.extraHists['ewk'],"W#rightarrowl#nu + Z/#gamma*#rightarrowl^{+}l^{-} + VV" , "l")
-            for signal in self.signals:
-                mass=signal.GetName()[-3:]
-                for s in signalsForPlotting:
-                    if s.name in signal.GetName(): legend.AddEntry(signal, "H^{#pm} (m="+mass+" GeV)", "l")
-            legend.Draw("SAME")
-
-            #self.lPad.cd()
-            #ewkEff.Draw("C")
-            #topEff.Draw("SAME C")
-            #for signalEff in signalEffs: signalEff.Draw("SAME C")
-            
-            self.canvas.SaveAs(outputDir+'/shape_'+self.name+'.pdf')
-            self.canvas.SaveAs(outputDir+'/shape_'+self.name+'.eps')
-            self.canvas.SaveAs(outputDir+'/shape_'+self.name+'.png')
+            self.extraHists[histName].Write()
 
     #---------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    def makeStat(self, h, ID):
+        statUp=h.Clone(h.GetName()+'_stat_'+ID+'Up')
+        statDown=h.Clone(h.GetName()+'_stat_'+ID+'Down')
+        
+        if self.is1D:
+            for xBin in range(0,self.nBinsX+2):
+                nominal=h.GetBinContent(xBin)
+                unc=h.GetBinError(xBin)
+                statUp.SetBinContent(xBin,nominal+unc)
+                statDown.SetBinContent(xBin,max(0,nominal-unc))
+        else:
+            for xBin in range(0,self.nBinsX+2):
+                for yBin in range(0,self.nBinsY+2):
+                    nominal=h.GetBinContent(xBin,yBin)
+                    unc=h.GetBinError(xBin,yBin)
+                    statUp.SetBinContent(xBin,yBin,nominal+unc)
+                    statDown.SetBinContent(xBin,yBin,max(0,nominal-unc))
+        self.extraHists[ID+'_statUp']=statUp
+        self.extraHists[ID+'_statDown']=statDown
+
+    #---------------------------------------------------------------------------------------------------------------------------------------------------------
+                        
     def overflow(self, h):
 
         if self.is1D:
@@ -584,8 +512,8 @@ class Plot:
     #---------------------------------------------------------------------------------------------------------------------------------------------------------
         
     def integral(self, h):
-        try: return h.Integral(0,h.GetNbinsX()+1)
-        except: return h.Integral(0,h.GetNbinsX()+1,0,h.GetNbinsY()+1)
+        if type(h)==type(TH1F()): return h.Integral(0,h.GetNbinsX()+1)
+        else: return h.Integral(0,h.GetNbinsX()+1,0,h.GetNbinsY()+1)
         
     #---------------------------------------------------------------------------------------------------------------------------------------------------------
             
@@ -599,14 +527,13 @@ class Plot:
             histogram.GetYaxis().SetLabelSize(0.08)
             histogram.GetYaxis().SetTitleSize(0.08)
             histogram.GetYaxis().SetTitleOffset(1.2)
-        else:            
+        else:
             histogram.GetYaxis().SetLabelSize(0.08)
             histogram.GetYaxis().SetTitleSize(0.12)
             histogram.GetYaxis().SetTitleOffset(.75)
-        
-        histogram.GetYaxis().CenterTitle()
 
-                
+        histogram.GetYaxis().CenterTitle()
+        
         if self.yLog:
             self.uPad.SetLogy()
             histogram.SetMaximum(500*histogram.GetMaximum())

@@ -15,10 +15,14 @@ except:
     print "No input dir specified"
     exit(1)
 
+try: distribution=argv[2]
+except: distribution=None
+
 for signal in ['Wh_125p6_0P','Wh_125p6_0M','Wh_125p6_0Mf05ph0']:
 
     theCard=DataCard(signalNames=[signal])
     theCard.fromPickle(inputDir+'/yields.p')
+    if distribution: theCard.distribution=distribution
     theCard.construct()
 
     shortName=signal.split('_')[-1]

@@ -34,23 +34,36 @@ def fillBins(h):
             
 def unroll(h):
     if type(h)==type(TH1F()): return h
-    
-    nX=h.GetNbinsX()+2
-    nY=h.GetNbinsY()+2
 
-    result=TH1F("", h.GetTitle(), nX*nY, 0, nX*nY)
+    nX=h.GetNbinsX()
+    nY=h.GetNbinsY()
 
-    for yBin in range(nY):
-        for xBin in range(nX):
-            n = xBin + (nX*yBin)
+    originalIntegral=h.Integral()
+
+    result=TH1F("", h.GetTitle(), (nX)*(nY), 0, (nX)*(nY))
+
+    for yBin in range(1,nY+1):
+        for xBin in range(1,nX+1):
+            n = xBin + (nX*(yBin-1))
             result.SetBinContent(n,h.GetBinContent(xBin,yBin))
             result.SetBinError(n,h.GetBinError(xBin,yBin))
 
     name=h.GetName()
     h.Delete()
     result.SetName(name)
-    
+
+    if abs(originalIntegral-result.Integral())>.001*abs(originalIntegral): raise Exception("utils.py: Unrolled histogram has integral which difffers from original.  Original:",originalIntegral,"Result:",result.Integral())
     return result
+
+##############################################################################
+
+def rebin(h):
+    min=0.5
+    
+    #if type(h)!=type(TH1F()): return h
+
+    #if 
+
     
 ##############################################################################
 #Printing tables
