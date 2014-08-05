@@ -336,7 +336,7 @@ class Plot:
             self.lPad.SetGridy()
             self.lPad.Draw()
 
-        self.extraHists['Data'].SetMaximum(2*self.extraHists['Data'].GetMaximum())
+        self.extraHists['Data'].SetMaximum(2*max(self.extraHists['Data'].GetMaximum(),self.extraHists['Total Background'].GetMaximum()))
         self.extraHists['Data'].SetMinimum(0.025)
 
         binWidth=round(self.extraHists['Data'].GetBinWidth(1),5)
