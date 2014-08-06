@@ -357,7 +357,6 @@ class Plot:
             if signal in samplesForPlotting:
                 signal.h.Scale(signalMagFrac)
                 signal.h.Draw("SAME HIST")
-                signal.h.Scale(1./signalMagFrac)
 
         self.extraHists['Data'].Draw("SAME E1 X0") #redraw data so its not hidden
         self.uPad.RedrawAxis()
