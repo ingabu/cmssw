@@ -7,16 +7,18 @@
   <class name="edm::Wrapper<std::vector<Hbb::Tuple> >"/>
 
   <class name="Hbb::Object" ClassVersion="10">
-    <version ClassVersion="10" checksum="514186134"/>
+    <version ClassVersion="10" checksum="3239398631"/>
   </class>
   <class name="std::vector<Hbb::Object>"/>
   <class pattern="edm::Wrapper<Hbb::Object>"/>
   <class name="edm::Wrapper<std::vector<Hbb::Object> >"/>
-
+  <class name="std::vector<Hbb::Object*>"/>
+  
   <class name="Hbb::Jet" ClassVersion="10">
-    <version ClassVersion="10" checksum="1560960985"/>
+    <version ClassVersion="10" checksum="560317753"/>
   </class>
   <class name="std::vector<Hbb::Jet>"/>
+  <class name="std::vector<Hbb::Jet*>"/>
   <class pattern="edm::Wrapper<Hbb::Jet>"/>
   <class name="edm::Wrapper<std::vector<Hbb::Jet> >"/>
   

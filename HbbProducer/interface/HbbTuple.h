@@ -13,7 +13,7 @@ namespace Hbb
   struct Object
   {
     TLorentzVector lv;
-    //Object *daughter1, *daughter2;
+    std::vector<Object*> daughters;
 
   Object() :
     lv(TLorentzVector())
@@ -36,17 +36,41 @@ namespace Hbb
   
   struct Jet:Object
   {
+    float area;
     float tau1, tau2, tau3;
     float prunedMass, trimmedMass, filteredMass;
     float qJetsVolatility;
-  
-  Jet() : Object(),
-      tau1(-9999), tau2(-9999), tau3(-9999),
-      prunedMass(-9999), trimmedMass(-9999), filteredMass(-9999),
-      qJetsVolatility(-9999)
-    {
-    }
 
+    std::vector<Jet*> trimmedSubjets;
+    std::vector<Jet*> filteredSubjets;
+    std::vector<Jet*> prunedSubjets;
+    
+  Jet() : Object()
+      {
+	this->initialize();
+      }
+    
+  Jet(TLorentzVector theLV) : Object(theLV)
+    {
+      this->initialize();
+    }
+    
+  Jet(double pT, double eta, double phi, double m) : Object(pT, eta, phi, m)
+      {
+	this->initialize();
+      }
+    
+    void initialize(){
+      area=-9999;
+      tau1=-9999; 
+      tau2=-9999;
+      tau3=-9999;
+      prunedMass=-9999;
+      trimmedMass=-9999;
+      filteredMass=-9999;
+      qJetsVolatility=-9999;
+    }
+    
   };
   
   //---------------------------------------------------------------------------------

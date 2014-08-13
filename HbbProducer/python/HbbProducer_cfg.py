@@ -1,5 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
+
 process = cms.Process("Hbb")
 process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True),
                                      allowUnscheduled = cms.untracked.bool(True) 
@@ -27,7 +28,6 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.GlobalTag.globaltag = theGlobalTag
 
 process.chs = cms.EDFilter('CandPtrSelector', src = cms.InputTag('packedPFCandidates'), cut = cms.string('fromPV'))
-
 
 #2012 Tight muon: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId#Tight_Muon
 #missing dZ cut - JS
@@ -70,16 +70,17 @@ process.fixedGridRhoFastjetAll.pfCandidatesTag = 'packedPFCandidates'
 process.ak4PFJets.src = 'packedPFCandidates'
 process.ak4PFJetsCHS.src = 'chs'
 
-process.ak8PFJetsCHS = process.ak4PFJets.clone( rParam = 0.8 )
-process.ak10PFJetsCHS = process.ak4PFJetsCHS.clone(rParam = 1)
+process.ak8PFJetsCHS  = process.ak4PFJetsCHS.clone(rParam = 0.8)
+process.ak10PFJetsCHS = process.ak4PFJetsCHS.clone(rParam = 1.0)
 process.ak12PFJetsCHS = process.ak4PFJetsCHS.clone(rParam = 1.2)
 process.ak15PFJetsCHS = process.ak4PFJetsCHS.clone(rParam = 1.5)
 
 process.ak4GenJets.src = 'packedGenParticles'
-process.ak8GenJets = process.ak4GenJets.clone(rParam = 0.8)
-process.ak10GenJets = process.ak8GenJets.clone(rParam = 1)
-process.ak12GenJets = process.ak8GenJets.clone(rParam = 12)
-process.ak15GenJets = process.ak8GenJets.clone(rParam = 15)
+process.ak3GenJets  = process.ak4GenJets.clone(rParam = 0.3)
+process.ak8GenJets  = process.ak4GenJets.clone(rParam = 0.8)
+process.ak10GenJets = process.ak4GenJets.clone(rParam = 1.0)
+process.ak12GenJets = process.ak4GenJets.clone(rParam = 1.2)
+process.ak15GenJets = process.ak4GenJets.clone(rParam = 1.5)
 
 process.ak8PFJetsCHSPruned.src = 'chs'
 process.ak8PFJetsCHSTrimmed.src = 'chs'
@@ -100,6 +101,46 @@ process.ak15PFJetsCHSFiltered = process.ak8PFJetsCHSFiltered.clone(rParam = 1.5)
 from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection
 from PhysicsTools.PatAlgos.tools.jetTools import switchJetCollection
 
+"""
+process.ak3PFchsL1L2L3 = cms.ESProducer("JetCorrectionESChain",
+                                        correctors = cms.vstring('ak3PFCHSL1Offset', 
+                                                                 'ak3PFCHSL2Relative', 
+                                                                 'ak3PFCHSL3Absolute')
+                                        )
+
+process.ak3PFCHSL1Offset = cms.ESProducer("L1OffsetCorrectionESProducer",
+                                          minVtxNdof = cms.int32(4),
+                                          vertexCollection = cms.string('unpackedTracksAndVertices'),
+                                          algorithm = cms.string('AK3PFCHS'),
+                                          level = cms.string('L1Offset'),
+                                          useCondDB = cms.untracked.bool(True)
+                                          )
+
+process.ak3PFCHSL2Relative = cms.ESProducer("LXXXCorrectionESProducer",
+                                            algorithm = cms.string('AK3PFCHS'),
+                                            level = cms.string('L2Relative'),
+                                            useCondDB = cms.untracked.bool(True)
+                                            )
+
+process.ak3PFCHSL3Absolute = cms.ESProducer("LXXXCorrectionESProducer",
+                                            algorithm = cms.string('AK3PFCHS'),
+                                            level = cms.string('L3Absolute'),
+                                            useCondDB = cms.untracked.bool(True)
+                                            )
+"""
+"""
+addJetCollection(
+    process,
+    labelName = 'AK3PFCHS',
+    jetSource = cms.InputTag('ak3PFJetsCHS'),
+    algo = 'ak3',
+    rParam = 0.3,
+    jetCorrections = ('AK3PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    )
+"""
 addJetCollection(
     process,
     labelName = 'AK4PFCHS',
@@ -111,7 +152,43 @@ addJetCollection(
     pvSource = cms.InputTag('unpackedTracksAndVertices'),
     btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
     )
+"""
+addJetCollection(
+    process,
+    labelName = 'AK5PFCHS',
+    jetSource = cms.InputTag('ak5PFJetsCHS'),
+    algo = 'ak5',
+    rParam = 0.5,
+    jetCorrections = ('AK5PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    )
 
+addJetCollection(
+    process,
+    labelName = 'AK6PFCHS',
+    jetSource = cms.InputTag('ak6PFJetsCHS'),
+    algo = 'ak6',
+    rParam = 0.6,
+    jetCorrections = ('AK6PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    )
+
+addJetCollection(
+    process,
+    labelName = 'AK7PFCHS',
+    jetSource = cms.InputTag('ak7PFJetsCHS'),
+    algo = 'ak7',
+    rParam = 0.7,
+    jetCorrections = ('AK7PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    )
+"""
 addJetCollection(
     process,
     labelName = 'AK8PFCHS',
@@ -121,8 +198,21 @@ addJetCollection(
     jetCorrections = ('AK8PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
     trackSource = cms.InputTag('unpackedTracksAndVertices'),
     pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
     )
-
+"""
+addJetCollection(
+    process,
+    labelName = 'AK9PFCHS',
+    jetSource = cms.InputTag('ak9PFJetsCHS'),
+    algo = 'ak9',
+    rParam = 0.9,
+    jetCorrections = ('AK9PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    )
+"""
 addJetCollection(
     process,
     labelName = 'AK10PFCHS',
@@ -132,6 +222,7 @@ addJetCollection(
     jetCorrections = ('AK10PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
     trackSource = cms.InputTag('unpackedTracksAndVertices'),
     pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
     )
 
 addJetCollection(
@@ -143,6 +234,7 @@ addJetCollection(
     jetCorrections = ('AK10PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
     trackSource = cms.InputTag('unpackedTracksAndVertices'),
     pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
     )
 
 addJetCollection(
@@ -154,6 +246,7 @@ addJetCollection(
     jetCorrections = ('AK10PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
     trackSource = cms.InputTag('unpackedTracksAndVertices'),
     pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
     )
 
 switchJetCollection(
@@ -161,66 +254,173 @@ switchJetCollection(
     jetSource = cms.InputTag('ak4PFJets'),
     algo = 'ak4',
     rParam = 0.4,
-    jetCorrections = ('AK5PF', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'Type-1'),
-    # btagDiscriminators = ['jetBProbabilityBJetTags',
-    #                       'jetProbabilityBJetTags',
-    #                       'trackCountingHighPurBJetTags',
-    #                       'trackCountingHighEffBJetTags',
-    #                       'simpleSecondaryVertexHighEffBJetTags',
-    #                       'simpleSecondaryVertexHighPurBJetTags',
-    #                       'combinedSecondaryVertexBJetTags'
-    #                       ],
+    jetCorrections = ('AK4PF', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'Type-1'),
     trackSource = cms.InputTag('unpackedTracksAndVertices'),
     pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    #btagDiscriminators = ['combinedSecondaryVertexBJetTags'],   #this breaks the config
     )
 
-
-process.patJetsAK4PFCHS.addJetCharge   = False
-process.patJetsAK4PFCHS.addBTagInfo    = True
-process.patJetsAK4PFCHS.getJetMCFlavour = False
-process.patJetsAK4PFCHS.addAssociatedTracks = False
-process.patJetPartonMatchAK4PFCHS.matched='prunedGenParticles'
-process.patJetCorrFactorsAK4PFCHS.primaryVertices = 'offlineSlimmedPrimaryVertices'
-
-for module in [process.patJetsAK8PFCHS, process.patJetsAK10PFCHS, process.patJetsAK12PFCHS, process.patJetsAK15PFCHS]:
+for module in [process.patJetsAK4PFCHS, process.patJetsAK8PFCHS, process.patJetsAK10PFCHS, process.patJetsAK12PFCHS, process.patJetsAK15PFCHS]:
     module.addJetCharge   = False
-    module.addBTagInfo    = False    #For some reason this has to be False 
+    module.addBTagInfo    = True   
     module.getJetMCFlavour = False
     module.addAssociatedTracks = False
 
-process.patJetPartonMatchAK8PFCHS.matched='prunedGenParticles'
-process.patJetCorrFactorsAK8PFCHS.primaryVertices = 'offlineSlimmedPrimaryVertices'
+for module in [process.patJetPartonMatch, process.patJetPartonMatchAK4PFCHS, process.patJetPartonMatchAK8PFCHS, process.patJetPartonMatchAK10PFCHS, process.patJetPartonMatchAK12PFCHS, process.patJetPartonMatchAK15PFCHS]:
+    module.matched='prunedGenParticles'
 
-process.patJetPartonMatchAK10PFCHS.matched='prunedGenParticles'
-process.patJetCorrFactorsAK10PFCHS.primaryVertices = 'offlineSlimmedPrimaryVertices'
-
-process.patJetPartonMatchAK12PFCHS.matched='prunedGenParticles'
-process.patJetCorrFactorsAK12PFCHS.primaryVertices = 'offlineSlimmedPrimaryVertices'
-
-process.patJetPartonMatchAK15PFCHS.matched='prunedGenParticles'
-process.patJetCorrFactorsAK15PFCHS.primaryVertices = 'offlineSlimmedPrimaryVertices'
-
-process.patJetPartonMatch.matched = 'prunedGenParticles'
-process.patJetCorrFactors.primaryVertices = 'offlineSlimmedPrimaryVertices'
+for module in [process.patJetCorrFactors, process.patJetCorrFactorsAK4PFCHS, process.patJetCorrFactorsAK8PFCHS, process.patJetCorrFactorsAK10PFCHS, process.patJetCorrFactorsAK12PFCHS, process.patJetCorrFactorsAK15PFCHS]:
+    module.primaryVertices = 'offlineSlimmedPrimaryVertices'
 
 process.load('RecoBTag.Configuration.RecoBTag_cff')
 process.load('RecoJets.Configuration.RecoJetAssociations_cff')
 process.load('PhysicsTools.PatAlgos.slimming.unpackedTracksAndVertices_cfi')
 
-process.ak4JetTracksAssociatorAtVertexPF.jets = cms.InputTag('ak4PFJetsCHS')
+process.ak4JetTracksAssociatorAtVertexPF.jets = cms.InputTag('ak4PFJets')
 process.ak4JetTracksAssociatorAtVertexPF.tracks = cms.InputTag('unpackedTracksAndVertices')
-process.ak8JetTracksAssociatorAtVertexPF=process.ak4JetTracksAssociatorAtVertexPF.clone(jets = cms.InputTag('ak8PFJetsCHS'), coneSize = 0.8)
-process.ak10JetTracksAssociatorAtVertexPF=process.ak4JetTracksAssociatorAtVertexPF.clone(jets = cms.InputTag('ak10PFJetsCHS'), coneSize = 1)
-process.ak12JetTracksAssociatorAtVertexPF=process.ak4JetTracksAssociatorAtVertexPF.clone(jets = cms.InputTag('ak12PFJetsCHS'), coneSize = 1.2)
-process.ak15JetTracksAssociatorAtVertexPF=process.ak4JetTracksAssociatorAtVertexPF.clone(jets = cms.InputTag('ak15PFJetsCHS'), coneSize = 1.5)
+
+process.ak4JetTracksAssociatorAtVertexPFCHS=process.ak4JetTracksAssociatorAtVertexPF.clone(jets = cms.InputTag('ak4PFJetsCHS'), coneSize = 0.4)
+process.ak8JetTracksAssociatorAtVertexPFCHS=process.ak4JetTracksAssociatorAtVertexPF.clone(jets = cms.InputTag('ak8PFJetsCHS'), coneSize = 0.8)
+process.ak10JetTracksAssociatorAtVertexPFCHS=process.ak4JetTracksAssociatorAtVertexPF.clone(jets = cms.InputTag('ak10PFJetsCHS'), coneSize = 1)
+process.ak12JetTracksAssociatorAtVertexPFCHS=process.ak4JetTracksAssociatorAtVertexPF.clone(jets = cms.InputTag('ak12PFJetsCHS'), coneSize = 1.2)
+process.ak15JetTracksAssociatorAtVertexPFCHS=process.ak4JetTracksAssociatorAtVertexPF.clone(jets = cms.InputTag('ak15PFJetsCHS'), coneSize = 1.5)
 
 process.impactParameterTagInfos.primaryVertex = cms.InputTag('unpackedTracksAndVertices')
 process.inclusiveSecondaryVertexFinderTagInfos.extSVCollection = cms.InputTag('unpackedTracksAndVertices','secondary','')
-process.combinedSecondaryVertex.trackMultiplicityMin = 1 #silly sv, uses un filtered tracks.. i.e. any pt                                                                        
+process.combinedSecondaryVertex.trackMultiplicityMin = 1
+
+process.secondaryVertexTagInfosAK4PFCHS.trackSelection.jetDeltaRMax = 0.4
+process.secondaryVertexTagInfosAK4PFCHS.vertexCuts.maxDeltaRToJetAxis = 0.4
+process.combinedSecondaryVertexAK4PFCHS=process.combinedSecondaryVertex.clone()
+process.combinedSecondaryVertexAK4PFCHS.trackSelection.jetDeltaRMax = 0.4
+process.combinedSecondaryVertexAK4PFCHS.trackPseudoSelection.jetDeltaRMax = 0.4
+process.combinedSecondaryVertexBJetTagsAK4PFCHS.jetTagComputer = 'combinedSecondaryVertexAK4PFCHS'
+
+from RecoJets.JetProducers.SubJetParameters_cfi import SubJetParameters
+
+
+addJetCollection(
+    process,
+    labelName = 'AK8PFCHSFiltered',
+    jetSource = cms.InputTag('ak8PFJetsCHSFiltered'),
+    jetCorrections = ('AK8PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    getJetMCFlavour = False
+    )
+
+addJetCollection(
+    process,
+    labelName = 'AK8PFCHSFilteredSubjets',
+    jetSource = cms.InputTag('ak8PFJetsCHSFiltered','SubJets'),
+    jetCorrections = ('AK8PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    getJetMCFlavour = False,
+    )
+
+process.patJetsAK8PFCHSFilteredPacked = cms.EDProducer("BoostedJetMerger",
+                                                       jetSrc=cms.InputTag("patJetsAK8PFCHSFiltered" ),
+                                                       subjetSrc=cms.InputTag("patJetsAK8PFCHSFilteredSubjets")
+                                                       )
+addJetCollection(
+    process,
+    labelName = 'AK10PFCHSFiltered',
+    jetSource = cms.InputTag('ak10PFJetsCHSFiltered'),
+    jetCorrections = ('AK10PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    getJetMCFlavour = False
+    )                                                  
+
+addJetCollection(
+    process,
+    labelName = 'AK10PFCHSFilteredSubjets',
+    jetSource = cms.InputTag('ak10PFJetsCHSFiltered','SubJets'),
+    jetCorrections = ('AK10PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    getJetMCFlavour = False,
+    )
+
+process.patJetsAK10PFCHSFilteredPacked = cms.EDProducer("BoostedJetMerger",
+                                                        jetSrc=cms.InputTag("patJetsAK10PFCHSFiltered" ),
+                                                        subjetSrc=cms.InputTag("patJetsAK10PFCHSFilteredSubjets")
+                                                        )
+
+addJetCollection(
+    process,
+    labelName = 'AK12PFCHSFiltered',
+    jetSource = cms.InputTag('ak12PFJetsCHSFiltered'),
+    jetCorrections = ('AK10PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    getJetMCFlavour = False
+    )
+
+addJetCollection(
+    process,
+    labelName = 'AK12PFCHSFilteredSubjets',
+    jetSource = cms.InputTag('ak12PFJetsCHSFiltered','SubJets'),
+    jetCorrections = ('AK10PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    getJetMCFlavour = False,
+    )
+
+process.patJetsAK12PFCHSFilteredPacked = cms.EDProducer("BoostedJetMerger",
+                                                        jetSrc=cms.InputTag("patJetsAK12PFCHSFiltered" ),
+                                                        subjetSrc=cms.InputTag("patJetsAK12PFCHSFilteredSubjets")
+                                                        )
+
+addJetCollection(
+    process,
+    labelName = 'AK15PFCHSFiltered',
+    jetSource = cms.InputTag('ak15PFJetsCHSFiltered'),
+    jetCorrections = ('AK10PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    getJetMCFlavour = False
+    )
+
+addJetCollection(
+    process,
+    labelName = 'AK15PFCHSFilteredSubjets',
+    jetSource = cms.InputTag('ak15PFJetsCHSFiltered','SubJets'),
+    jetCorrections = ('AK10PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+    trackSource = cms.InputTag('unpackedTracksAndVertices'),
+    pvSource = cms.InputTag('unpackedTracksAndVertices'),
+    btagDiscriminators = ['combinedSecondaryVertexBJetTags'],
+    getJetMCFlavour = False,
+    )
+
+process.patJetsAK15PFCHSFilteredPacked = cms.EDProducer("BoostedJetMerger",
+                                                        jetSrc=cms.InputTag("patJetsAK15PFCHSFiltered" ),
+                                                        subjetSrc=cms.InputTag("patJetsAK15PFCHSFilteredSubjets")
+                                                        )
+
+for module in [process.patJetPartonMatchAK8PFCHSFiltered, process.patJetPartonMatchAK10PFCHSFiltered, process.patJetPartonMatchAK12PFCHSFiltered, process.patJetPartonMatchAK15PFCHSFiltered,
+               process.patJetPartonMatchAK8PFCHSFilteredSubjets, process.patJetPartonMatchAK10PFCHSFilteredSubjets, process.patJetPartonMatchAK12PFCHSFilteredSubjets, process.patJetPartonMatchAK15PFCHSFilteredSubjets]:
+    module.matched='prunedGenParticles'
+
+for module in [process.patJetCorrFactorsAK8PFCHSFiltered, process.patJetCorrFactorsAK10PFCHSFiltered, process.patJetCorrFactorsAK12PFCHSFiltered, process.patJetCorrFactorsAK15PFCHSFiltered,
+               process.patJetCorrFactorsAK8PFCHSFilteredSubjets, process.patJetCorrFactorsAK10PFCHSFilteredSubjets, process.patJetCorrFactorsAK12PFCHSFilteredSubjets, process.patJetCorrFactorsAK15PFCHSFilteredSubjets]:
+    module.primaryVertices = 'offlineSlimmedPrimaryVertices'
+    
+for module in [process.patJetGenJetMatchAK8PFCHSFiltered, process.patJetGenJetMatchAK10PFCHSFiltered, process.patJetGenJetMatchAK12PFCHSFiltered, process.patJetGenJetMatchAK15PFCHSFiltered,
+               process.patJetGenJetMatchAK8PFCHSFilteredSubjets, process.patJetGenJetMatchAK10PFCHSFilteredSubjets, process.patJetGenJetMatchAK12PFCHSFilteredSubjets, process.patJetGenJetMatchAK15PFCHSFilteredSubjets]:
+    module.matched = 'ak3GenJets'
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 process.load('RecoJets.JetProducers.jettoolbox_cff')
-
+"""
 process.NjettinessAK10=process.NjettinessAK8.clone(src="ak10PFJetsCHS", cone=1.0)
 process.NjettinessAK12=process.NjettinessAK8.clone(src="ak12PFJetsCHS", cone=1.2)
 process.NjettinessAK15=process.NjettinessAK8.clone(src="ak15PFJetsCHS", cone=1.5)
@@ -263,7 +463,7 @@ process.patJetsAK12PFCHS.userData.userFloats.src += ['NjettinessAK12:tau1','Njet
 process.patJetsAK15PFCHS.userData.userFloats.src += ['NjettinessAK15:tau1','NjettinessAK15:tau2','NjettinessAK15:tau3',
                                                     'QJetsAdderAK15:QjetsVolatility',
                                                     'AK15PFJetsCHSPrunedLinks','AK15PFJetsCHSTrimmedLinks','AK15PFJetsCHSFilteredLinks']
-
+"""
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                              
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
