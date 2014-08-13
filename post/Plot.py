@@ -336,7 +336,7 @@ class Plot:
             self.lPad.SetGridy()
             self.lPad.Draw()
 
-        self.extraHists['Data'].SetMaximum(2*self.extraHists['Data'].GetMaximum())
+        self.extraHists['Data'].SetMaximum(2*max(self.extraHists['Data'].GetMaximum(),self.extraHists['Total Background'].GetMaximum()))
         self.extraHists['Data'].SetMinimum(0.025)
 
         binWidth=round(self.extraHists['Data'].GetBinWidth(1),5)
@@ -357,7 +357,6 @@ class Plot:
             if signal in samplesForPlotting:
                 signal.h.Scale(signalMagFrac)
                 signal.h.Draw("SAME HIST")
-                signal.h.Scale(1./signalMagFrac)
 
         self.extraHists['Data'].Draw("SAME E1 X0") #redraw data so its not hidden
         self.uPad.RedrawAxis()
