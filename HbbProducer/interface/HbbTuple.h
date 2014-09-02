@@ -13,7 +13,7 @@ namespace Hbb
   struct Object
   {
     TLorentzVector lv;
-    std::vector<Object*> daughters;
+    //std::vector<Object*> daughters;
 
   Object() :
     lv(TLorentzVector())
@@ -40,6 +40,8 @@ namespace Hbb
     float tau1, tau2, tau3;
     float prunedMass, trimmedMass, filteredMass;
     float qJetsVolatility;
+    float csv;
+    float Nconstit;
 
     std::vector<Jet*> trimmedSubjets;
     std::vector<Jet*> filteredSubjets;
@@ -69,7 +71,10 @@ namespace Hbb
       trimmedMass=-9999;
       filteredMass=-9999;
       qJetsVolatility=-9999;
+      csv=-9999;
+      Nconstit=-9999;
     }
+
     
   };
   
@@ -126,6 +131,19 @@ namespace Hbb
 
   struct Higgs:Object
   {
+
+    float csv;
+    
+    
+  Higgs() : Object()
+      {
+	this->initialize();
+      }
+
+    void initialize(){
+      csv=-9999;
+    }
+
   };
 
   //---------------------------------------------------------------------------------
@@ -150,13 +168,13 @@ namespace Hbb
     std::vector<Muon> Muons;
     std::vector<Tau> Taus;
 
-    std::vector<Higgs> Higgses;
+    std::vector<Higgs> THiggs;
     
   Tuple() : 
     rho(-9999), 
       AK4PFCHS(std::vector<Jet>()), AK8PFCHS(std::vector<Jet>()), AK10PFCHS(std::vector<Jet>()), AK12PFCHS(std::vector<Jet>()), AK15PFCHS(std::vector<Jet>()),
       Electrons(std::vector<Electron>()), Muons(std::vector<Muon>()),Taus(std::vector<Tau>()),
-      Higgses(std::vector<Higgs>())
+      THiggs(std::vector<Higgs>())
     {
     }
   };
