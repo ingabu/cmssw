@@ -1,24 +1,23 @@
 <lcgdict>
   <class name="Hbb::Tuple" ClassVersion="10">
-    <version ClassVersion="10" checksum="1057861921"/>
+    <version ClassVersion="10" checksum="644162991"/>
   </class>
   <class name="std::vector<Hbb::Tuple>"/>
   <class pattern="edm::Wrapper<Hbb::Tuple>"/>
   <class name="edm::Wrapper<std::vector<Hbb::Tuple> >"/>
 
   <class name="Hbb::Object" ClassVersion="10">
-    <version ClassVersion="10" checksum="3239398631"/>
+    <version ClassVersion="10" checksum="514186134"/>
   </class>
   <class name="std::vector<Hbb::Object>"/>
   <class pattern="edm::Wrapper<Hbb::Object>"/>
   <class name="edm::Wrapper<std::vector<Hbb::Object> >"/>
-  <class name="std::vector<Hbb::Object*>"/>
   
   <class name="Hbb::Jet" ClassVersion="10">
-    <version ClassVersion="10" checksum="560317753"/>
+    <version ClassVersion="10" checksum="2066397767"/>
   </class>
   <class name="std::vector<Hbb::Jet>"/>
-  <class name="std::vector<Hbb::Jet*>"/>
+  <class name="std::vector<Hbb::Jet*>"/> 
   <class pattern="edm::Wrapper<Hbb::Jet>"/>
   <class name="edm::Wrapper<std::vector<Hbb::Jet> >"/>
   
@@ -58,7 +57,7 @@
   <class name="edm::Wrapper<std::vector<Hbb::V> >"/>
 
   <class name="Hbb::Higgs" ClassVersion="10">
-    <version ClassVersion="10" checksum="2368969949"/>
+    <version ClassVersion="10" checksum="3620500067"/>
   </class>
   <class name="std::vector<Hbb::Higgs>"/>
   <class pattern="edm::Wrapper<Hbb::Higgs>"/>
