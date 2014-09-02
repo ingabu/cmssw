@@ -473,7 +473,7 @@ process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 process.options.allowUnscheduled = cms.untracked.bool(True)
 
 process.out = cms.OutputModule("PoolOutputModule",
-                               fileName = cms.untracked.string('Hbb.root'),
+                               fileName = cms.untracked.string('HbbTuple2.root'),
                                outputCommands = cms.untracked.vstring(['keep *_HbbProducer_*_*',
                                                                        ])
 )
