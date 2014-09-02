@@ -141,24 +141,26 @@ HbbProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   h_patJets AK4jets;
   iEvent.getByLabel(_AK4Source,AK4jets);
+  fatJetInputs.insert(pair<string,h_patJets >(string("AK4"),AK4jets));
+  fatJetOutputs.insert(pair<string, v_HbbJets* >(string("AK4"),&_output.AK4PFCHS));
   
   h_patJets AK8jets;
-  iEvent.getByLabel(_AK8PackedSource,AK8jets);
+  iEvent.getByLabel(_AK8Source,AK8jets);
   fatJetInputs.insert(pair<string,h_patJets >(string("AK8"),AK8jets));
   fatJetOutputs.insert(pair<string, v_HbbJets* >(string("AK8"),&_output.AK8PFCHS));
 
   h_patJets AK10jets;
-  iEvent.getByLabel(_AK10PackedSource,AK10jets);
+  iEvent.getByLabel(_AK10Source,AK10jets);
   fatJetInputs.insert(pair<string,h_patJets >(string("AK10"),AK10jets));
   fatJetOutputs.insert(pair<string, v_HbbJets* >(string("AK10"),&_output.AK10PFCHS));
   
   h_patJets AK12jets;
-  iEvent.getByLabel(_AK12PackedSource,AK12jets);
+  iEvent.getByLabel(_AK12Source,AK12jets);
   fatJetInputs.insert(pair<string,h_patJets >(string("AK12"),AK12jets));
   fatJetOutputs.insert(pair<string, v_HbbJets* >(string("AK12"),&_output.AK12PFCHS));
   
   h_patJets AK15jets;
-  iEvent.getByLabel(_AK15PackedSource,AK15jets);
+  iEvent.getByLabel(_AK15Source,AK15jets);
   fatJetInputs.insert(pair<string,h_patJets >(string("AK15"),AK15jets));
   fatJetOutputs.insert(pair<string, v_HbbJets* >(string("AK15"),&_output.AK15PFCHS));
   /*
@@ -219,8 +221,24 @@ HbbProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
   }
 
-  vector<Hbb::Higgs> theHiggses=telescope(d1, d2, packedCandidates, iSetup);
-  _output.Higgses=theHiggses;
+  vector<Hbb::Higgs> theTHiggs=telescope(d1, d2, packedCandidates, iSetup);
+  _output.THiggs=theTHiggs;
+  
+
+//for(auto diJetCollection=diJetInputs.begin(); diJetCollection!=diJetInputs.end(); ++diJetCollection){
+//  string name=diJetCollection->first;
+//  h_patJets inputJets=diJetCollection->second;
+//
+//  v_HbbJets outputJets;
+//  for(auto inputJet=inputJets->begin(); inputJet!=inputJets->end(); ++inputJet){
+//    
+//    Hbb::Jet jet=Hbb::Jet(inputJet->pt(), inputJet->eta(), inputJet->phi(), inputJet->mass());
+//
+//    outputJets.push_back(jet);
+//  }
+//  *diJetOutputs[name]=outputJets;
+//}
+//
   /*
   for(int i=0; i<nInterpretations; i++){
     float R=Rmin+(i*(Rmax-Rmin)/nInterpretations);
@@ -298,15 +316,21 @@ HbbProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     h_patJets inputJets=fatJetCollection->second;
 
     double radius=.1*std::atof(name.substr(2).c_str());
-
+    //std::cout << " R " << radius << std::endl; 
     v_HbbJets outputJets;
     for(auto inputJet=inputJets->begin(); inputJet!=inputJets->end(); ++inputJet){
-      
-      Hbb::Jet jet=Hbb::Jet(inputJet->pt(), inputJet->eta(), inputJet->phi(), inputJet->mass());
-      
-      groom(*inputJet, &jet, radius);
 
-      outputJets.push_back(jet);
+      double jetpt = inputJet->pt();
+      reco::Jet::Constituents jetconst = inputJet->getJetConstituents();
+
+      if (jetpt > 10) {
+      
+	Hbb::Jet jet=Hbb::Jet(inputJet->pt(), inputJet->eta(), inputJet->phi(), inputJet->mass());
+      
+	groom(*inputJet, &jet, radius);
+      
+	outputJets.push_back(jet);
+      }
     }
     *fatJetOutputs[name]=outputJets;
   }
