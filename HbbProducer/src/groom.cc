@@ -23,7 +23,7 @@ double Rtrim = 0.2;
 double ptfrac = 0.05;
 
 //filtering
-double Rfilt = 0.2;
+double Rfilt = 0.3;
 double Nfilt = 3;
 
 //pruning
@@ -36,24 +36,34 @@ double Rcut = 10000.0; // maximum R particles can be from axis to be included in
 //---------------------------------------------------------------------------------------------------------------------------------
 
 void groom(pat::Jet iJet, Hbb::Jet* oJet, double R){
+
+  oJet->csv = iJet.bDiscriminator("combinedSecondaryVertexBJetTags");
   
   reco::Jet::Constituents constituents=iJet.getJetConstituents();
+  
+  double nconstit = 0.0;
 
   vector<PseudoJet> fjConstituents;
   for(auto constituentItr=constituents.begin(); constituentItr!=constituents.end(); ++constituentItr){
     edm::Ptr<reco::Candidate> constituent=*constituentItr;
 
+    nconstit = nconstit + 1;
+
     fjConstituents.push_back(PseudoJet(constituent->px(), constituent->py(), constituent->pz(), constituent->energy()));
   }
+   
+  oJet->Nconstit = nconstit;
   
   JetDefinition jet_def(cambridge_algorithm, R);
   // the use of a ClusterSequenceArea (instead of a plain ClusterSequence)
   // is only needed because we will later combine filtering with area-based
-  // subtraction
+  // subtraction.
+  // Recluster the constituents using CA
   ClusterSequenceArea clust_seq(fjConstituents, jet_def, AreaDefinition(active_area_explicit_ghosts));
-  vector<PseudoJet> inclusive_jets = sorted_by_pt(clust_seq.inclusive_jets(0));
-  PseudoJet theJet=inclusive_jets[0];
-  
+  // Extract inclusive jets with Pt > 0, ordering them by pt. There's just one fat jet though.
+  vector<PseudoJet> inclusive_jets = sorted_by_pt(clust_seq.inclusive_jets(0)); 
+  PseudoJet theJet=inclusive_jets[0];  // get the reclustered fat jet
+
   //------------------------------------
   // Trimming
   //------------------------------------
@@ -63,9 +73,9 @@ void groom(pat::Jet iJet, Hbb::Jet* oJet, double R){
   
   oJet->trimmedMass=trimmedJet.m();
 
-  vector<PseudoJet> fjSubjets = trimmedJet.pieces();
-  for (size_t i = 0; i < fjSubjets.size(); i++){
-    oJet->trimmedSubjets.push_back(new Hbb::Jet(fjSubjets[i].pt(), fjSubjets[i].eta(), fjSubjets[i].phi(), fjSubjets[i].m()));
+  vector<PseudoJet> tjSubjets = sorted_by_pt(trimmedJet.pieces());
+  for (size_t i = 0; i < tjSubjets.size(); i++){
+    oJet->trimmedSubjets.push_back(new Hbb::Jet(tjSubjets[i].pt(), tjSubjets[i].eta(), tjSubjets[i].phi(), tjSubjets[i].m()));
   }
 
   //------------------------------------
@@ -77,7 +87,7 @@ void groom(pat::Jet iJet, Hbb::Jet* oJet, double R){
 
   oJet->filteredMass=filteredJet.m();
 
-  fjSubjets = filteredJet.pieces();
+  vector<PseudoJet> fjSubjets = sorted_by_pt(filteredJet.pieces());
   for (size_t i = 0; i < fjSubjets.size(); i++){
     oJet->filteredSubjets.push_back(new Hbb::Jet(fjSubjets[i].pt(), fjSubjets[i].eta(), fjSubjets[i].phi(), fjSubjets[i].m()));
   }
@@ -91,9 +101,9 @@ void groom(pat::Jet iJet, Hbb::Jet* oJet, double R){
 
   oJet->prunedMass=prunedJet.m();
   
-  fjSubjets = prunedJet.pieces();
-  for (size_t i = 0; i < fjSubjets.size(); i++){
-    oJet->prunedSubjets.push_back(new Hbb::Jet(fjSubjets[i].pt(), fjSubjets[i].eta(), fjSubjets[i].phi(), fjSubjets[i].m()));
+  vector<PseudoJet> pjSubjets = sorted_by_pt(prunedJet.pieces());
+  for (size_t i = 0; i < pjSubjets.size(); i++){
+    oJet->prunedSubjets.push_back(new Hbb::Jet(pjSubjets[i].pt(), pjSubjets[i].eta(), pjSubjets[i].phi(), pjSubjets[i].m()));
   }
 
   //------------------------------------
