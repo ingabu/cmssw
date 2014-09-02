@@ -21,6 +21,7 @@ typedef ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > XYZTLorentzVec
 
 
 vector<Hbb::Higgs> telescope(pat::Jet inputJet1, pat::Jet inputJet2, edm::Handle< edm::PtrVector<reco::Candidate> > candidates,  const edm::EventSetup& iSetup){
+
   vector<Hbb::Higgs> result;
 
   for(int i=0; i<nInterpretations; i++){
